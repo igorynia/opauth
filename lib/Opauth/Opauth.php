@@ -102,14 +102,8 @@ class Opauth {
 			} elseif (array_key_exists($this->env['params']['strategy'], $this->strategyMap)) {
 				$name = $this->strategyMap[$this->env['params']['strategy']]['name'];
 				$class = $this->strategyMap[$this->env['params']['strategy']]['class'];
-				$strategy = $this->env['Strategy'][$name];
 
-				// Strip out critical parameters
-				$safeEnv = $this->env;
-				unset($safeEnv['Strategy']);
-
-				$actualClass = $this->requireStrategy($class);
-				$this->Strategy = new $actualClass($strategy, $safeEnv);
+				$this->Strategy = $this->buildStrategy($name, $class);
 
 				if (empty($this->env['params']['action'])) {
 					$this->env['params']['action'] = 'request';
@@ -124,6 +118,22 @@ class Opauth {
 			trigger_error('No strategy is requested. Try going to '.$this->env['complete_path'].$sampleStrategy['strategy_url_name'].' to authenticate with '.$sampleStrategy['strategy_name'], E_USER_NOTICE);
 		}
 	}
+
+    /**
+     * @param string $name Strategy name
+     * @param string $class Strategy class
+     * @return OpauthStrategy
+     */
+    public function buildStrategy($name, $class) {
+        $strategy = $this->env['Strategy'][$name];
+
+        // Strip out critical parameters
+        $safeEnv = $this->env;
+        unset($safeEnv['Strategy']);
+
+        $actualClass = $this->requireStrategy($class);
+        return new $actualClass($strategy, $safeEnv);
+    }
 
 	/**
 	 * Parses Request URI
